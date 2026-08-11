@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+ <title>記帳本</title>
+ <meta name="theme-color" content="#007aff">
+ <meta name="apple-mobile-web-app-capable" content="yes">
+ <meta name="apple-mobile-web-app-status-bar-style" content="default">
+ <link rel="manifest" href="manifest.json">
+ <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+ <div class="app">
+ <div id="offline-banner" class="offline-banner hidden">目前離線，變更先保存在本機，連線後自動同步</div>
+ <header>
+ <h1>💰 記帳本 <span id="sync-status" class="sync-status" title=""></span></h1>
+ <div class="header-actions">
+ <button type="button" id="btn-auth" class="btn page-only" data-page="monthly" title="登入">👤</button>
+ <button type="button" id="btn-export" class="btn page-only" data-page="monthly" title="匯出">⬇</button>
+ <button type="button" id="btn-rates" class="btn page-only" data-page="monthly" title="匯率">💱</button>
+ <button type="button" id="btn-add-account" class="btn primary page-only hidden" data-page="assets">＋ 戶口</button>
+ <button type="button" id="btn-transfer" class="btn page-only hidden" data-page="assets">⇄ 轉帳</button>
+ <button type="button" id="btn-repay" class="btn page-only hidden" data-page="assets">💳 還款</button>
+ <button type="button" id="btn-collect" class="btn page-only hidden" data-page="assets">📥 收回</button>
+ <button type="button" id="btn-add-mpf-account" class="btn page-only hidden" data-page="assets">＋ 強積金</button>
+ <button type="button" id="btn-add-liability" class="btn page-only hidden" data-page="assets">＋ 扣減</button>
+ </div>
+ </header>
+
+ <div id="page-monthly" class="page active">
+ <div class="month-nav">
+ <button type="button" id="btn-prev-month" class="btn-icon">‹</button>
+ <h2 id="current-month-label">2026年8月</h2>
+ <button type="button" id="btn-next-month" class="btn-icon">›</button>
+ </div>
+ <div class="summary-cards summary-monthly">
+ <div class="card expense">
+ <div class="label">消費支出</div>
+ <div class="value" id="summary-expense">MOP 0</div>
+ </div>
+ <div class="card expense">
+ <div class="label">實際支出</div>
+ <div class="value" id="summary-expense-all">MOP 0</div>
+ </div>
+ <div class="card balance">
+ <div class="label">結餘</div>
+ <div class="value" id="summary-balance">MOP 0</div>
+ </div>
+ <div class="card balance">
+ <div class="label">現金流結餘</div>
+ <div class="value" id="summary-cashflow">MOP 0</div>
+ </div>
+ </div>
+ <p class="summary-hint">結餘＝收入−消費支出−存錢　｜　現金流結餘＝收入−實際支出−存錢</p>
+ <div class="page-actions">
+ <button type="button" id="btn-add" class="btn primary">＋ 新增</button>
+ <button type="button" id="btn-savings" class="btn">🐷 存錢</button>
+ </div>
+ <div class="stack-col">
+ <section class="records-section">
+ <div class="section-header">
+ <h3>本月紀錄</h3>
+ <button type="button" id="btn-toggle-filter" class="btn btn-sm">篩選</button>
+ </div>
+ <div id="filter-panel" class="filter-panel hidden">
+ <div class="filter-row">
+ <label>類型</label>
+ <select id="filter-type">
+ <option value="">全部</option>
+ <option value="income">收入</option>
+ <option value="expense">支出</option>
+ </select>
+ </div>
+ <div class="filter-row">
+ <label>分類</label>
+ <select id="filter-category"><option value="">全部</option></select>
+ </div>
+ <div class="filter-row">
+ <label>戶口</label>
+ <select id="filter-account"><option value="">全部</option></select>
+ </div>
+ <div class="filter-row">
+ <label>貨幣</label>
+ <select id="filter-currency">
+ <option value="">全部</option>
+ <option value="MOP">MOP</option>
+ <option value="HKD">HKD</option>
+ <option value="CNY">CNY</option>
+ </select>
+ </div>
+ <div class="filter-actions">
+ <button type="button" id="btn-filter-reset" class="btn btn-sm">清除</button>
+ <button type="button" id="btn-filter-apply" class="btn btn-sm primary">套用</button>
+ </div>
+ </div>
+ <div id="records-list"></div>
+ <div id="no-records" class="empty-hint">本月尚無紀錄</div>
+ </section>
+ </div>
+ </div>
+
+ <div id="page-analysis" class="page">
+ <div class="sub-tabs">
+ <button type="button" class="sub-tab active" data-sub="month">月份</button>
+ <button type="button" class="sub-tab" data-sub="year">年份</button>
+ </div>
+ <div id="analysis-month" class="analysis-panel active">
+ <div class="month-nav">
+ <button type="button" id="btn-prev-month-analysis" class="btn-icon">‹</button>
+ <h2 id="analysis-month-label">2026年8月</h2>
+ <button type="button" id="btn-next-month-analysis" class="btn-icon">›</button>
+ </div>
+ <section class="chart-section">
+ <h3>本月消費支出分類</h3>
+ <div id="categoryBars" class="bar-list"></div>
+ <div id="no-chart-data" class="empty-hint" style="display:none">本月尚無支出資料</div>
+ </section>
+ <section class="chart-section" id="custom-cat-sum-section">
+ <h3>自訂支出加總（勾選要合計的分類）</h3>
+ <div id="custom-cat-sum"></div>
+ </section>
+ </div>
+ <div id="analysis-year" class="analysis-panel">
+ <div class="month-nav">
+ <button type="button" id="btn-prev-year" class="btn-icon">‹</button>
+ <h2 id="current-year-label">2026年</h2>
+ <button type="button" id="btn-next-year" class="btn-icon">›</button>
+ </div>
+ <div class="summary-cards summary-stackable">
+ <div class="card income"><div class="label">年度收入</div><div class="value" id="year-income">MOP 0</div></div>
+ <div class="card expense"><div class="label">年度消費支出</div><div class="value" id="year-expense">MOP 0</div></div>
+ <div class="card balance summary-bottom"><div class="label">年度結餘</div><div class="value" id="year-balance">MOP 0</div></div>
+ </div>
+ <section class="chart-section">
+ <h3>年度消費支出分類</h3>
+ <div id="yearlyCategoryBars" class="bar-list"></div>
+ <div id="no-year-cat-data" class="empty-hint" style="display:none">本年尚無支出</div>
+ </section>
+ <section class="chart-section" id="year-custom-cat-sum-section">
+ <h3>自訂支出加總（勾選要合計的分類）</h3>
+ <div id="year-custom-cat-sum"></div>
+ </section>
+ <section class="records-section">
+ <h3>各月明細</h3>
+ <div id="yearly-months-list"></div>
+ </section>
+ </div>
+ </div>
+
+ <div id="page-assets" class="page">
+ <div class="summary-cards summary-assets">
+ <div class="card income"><div class="label">總資產 (MOP)</div><div class="value" id="assets-gross">MOP 0</div></div>
+ <div class="card expense"><div class="label">扣減合計 (MOP)</div><div class="value" id="assets-liability">MOP 0</div></div>
+ <div class="card balance"><div class="label">總存款 (MOP)</div><div class="value" id="assets-deposit">MOP 0</div></div>
+ <div class="card balance"><div class="label">淨資產 (MOP)</div><div class="value" id="assets-net">MOP 0</div></div>
+ </div>
+ <section class="records-section collapsible-section" id="section-dist">
+ <div class="section-collapse-header" data-section="dist" role="button" tabindex="0">
+ <span class="section-collapse-title"><span class="sec-chevron">▼</span> 資產分布</span>
+ </div>
+ <div class="section-collapse-body">
+ <div class="dist-blocks">
+ <div class="dist-block">
+ <div class="dist-block-title">強積金 / 銀行 / 其他（MOP）</div>
+ <div id="assetsAccountBars" class="bar-list"></div>
+ <div id="no-assets-data" class="empty-hint" style="display:none">尚無資料</div>
+ </div>
+ <div class="dist-block">
+ <div class="dist-block-title">依貨幣（折合 MOP）</div>
+ <div id="assetsCurrencyBars" class="bar-list"></div>
+ </div>
+ </div>
+ </div>
+ </section>
+ <section class="records-section collapsible-section" id="section-accounts">
+ <div class="section-collapse-header" data-section="accounts" role="button" tabindex="0">
+ <span class="section-collapse-title"><span class="sec-chevron">▼</span> 戶口</span>
+ </div>
+ <div class="section-summary">
+ <div class="summary-cards currency-four">
+ <div class="card balance"><div class="label">MOP</div><div class="value" id="net-mop">MOP 0</div></div>
+ <div class="card balance"><div class="label">HKD</div><div class="value" id="net-hkd">HKD 0</div></div>
+ <div class="card balance"><div class="label">CNY</div><div class="value" id="net-cny">CNY 0</div></div>
+ <div class="card balance highlight"><div class="label">總結餘 (MOP)</div><div class="value" id="net-total-mop">MOP 0</div></div>
+ </div>
+ </div>
+ <div class="section-collapse-body">
+ <div id="accounts-by-type"></div>
+ <div id="no-accounts" class="empty-hint">尚未新增任何戶口</div>
+ </div>
+ </section>
+ <section class="records-section collapsible-section" id="section-mpf">
+ <div class="section-collapse-header" data-section="mpf" role="button" tabindex="0">
+ <span class="section-collapse-title"><span class="sec-chevron">▼</span> 強積金</span>
+ </div>
+ <div class="section-summary">
+ <div class="summary-cards mpf-summary">
+ <div class="card balance">
+ <div class="label">強積金總結餘</div>
+ <div class="value" id="mpf-total">HKD 0</div>
+ </div>
+ <div class="card balance">
+ <div class="label mpf-change-label-row">
+ <button type="button" id="btn-mpf-prev-month" class="btn-icon mpf-month-btn">‹</button>
+ <span id="mpf-change-month-label">本月漲跌</span>
+ <button type="button" id="btn-mpf-next-month" class="btn-icon mpf-month-btn">›</button>
+ </div>
+ <div class="value" id="mpf-month-change">HKD 0</div>
+ </div>
+ </div>
+ </div>
+ <div class="section-collapse-body">
+ <div id="mpf-accounts-list"></div>
+ <div id="no-mpf-accounts" class="empty-hint">尚未新增強積金戶口</div>
+ </div>
+ </section>
+ <section class="records-section collapsible-section" id="section-liabilities">
+ <div class="section-collapse-header" data-section="liabilities" role="button" tabindex="0">
+ <span class="section-collapse-title"><span class="sec-chevron">▼</span> 扣減項</span>
+ <span class="section-header-total" id="liab-section-total">MOP 0</span>
+ </div>
+ <div class="section-summary">
+ <div class="summary-cards single">
+ <div class="card expense">
+ <div class="label">扣減合計</div>
+ <div class="value" id="liab-summary-total">MOP 0</div>
+ </div>
+ </div>
+ </div>
+ <div class="section-collapse-body">
+ <div id="liabilities-list"></div>
+ <div id="no-liabilities" class="empty-hint">尚無扣減項</div>
+ </div>
+ </section>
+ </div>
+
+ <nav class="bottom-nav">
+ <button type="button" class="nav-btn active" data-page="monthly"><span class="nav-icon">📝</span><span>記帳</span></button>
+ <button type="button" class="nav-btn" data-page="analysis"><span class="nav-icon">📊</span><span>分析</span></button>
+ <button type="button" class="nav-btn" data-page="assets"><span class="nav-icon">💎</span><span>資產</span></button>
+ </nav>
+ </div>
+
+ <!-- 匯出選單 -->
+ <div id="export-modal-overlay" class="modal-overlay hidden">
+ <div class="modal">
+ <div class="modal-header">
+ <h3>匯出 / 備份</h3>
+ <button type="button" id="btn-close-export" class="btn-icon">×</button>
+ </div>
+ <div class="export-body">
+ <p class="rates-hint">選擇要匯出的內容</p>
+ <button type="button" class="btn export-btn" id="btn-csv-records">📄 導出記帳 CSV</button>
+ <button type="button" class="btn export-btn" id="btn-csv-accounts">🏦 導出戶口 CSV</button>
+ <button type="button" class="btn export-btn" id="btn-csv-mpf">🏛️ 導出強積金 CSV</button>
+ <hr class="export-hr">
+ <button type="button" class="btn export-btn primary" id="btn-backup-export">💾 導出完整備份 (JSON)</button>
+ <button type="button" class="btn export-btn" id="btn-backup-import">📥 導入備份 (覆蓋現有資料)</button>
+ <input type="file" id="import-file" accept=".json,application/json" hidden>
+ <hr class="export-hr">
+ <button type="button" class="btn export-btn danger" id="btn-clear-all">🗑️ 一鍵清空所有資料</button>
+ <p class="field-hint" style="margin:0;padding:0 4px">清空後無法復原，建議先導出備份</p>
+ </div>
+ </div>
+ </div>
+
+ <!-- 紀錄 Modal -->
+ <div id="modal-overlay" class="modal-overlay hidden">
+ <div class="modal">
+ <div class="modal-header">
+ <h3 id="modal-title">新增紀錄</h3>
+ <button type="button" id="btn-close-modal" class="btn-icon">×</button>
+ </div>
+ <form id="record-form">
+ <input type="hidden" id="edit-id">
+ <div class="form-row">
+ <label>類型</label>
+ <div class="type-toggle">
+ <button type="button" class="type-btn active" data-type="expense">支出</button>
+ <button type="button" class="type-btn" data-type="income">收入</button>
+ </div>
+ </div>
+ <div class="form-row">
+ <label for="amount">金額</label>
+ <div class="amount-row">
+ <select id="currency" required>
+ <option value="MOP">MOP</option>
+ <option value="HKD">HKD</option>
+ <option value="CNY">CNY</option>
+ </select>
+ <input type="number" id="amount" step="0.01" min="0.01" placeholder="0.00" required>
+ </div>
+ </div>
+ <div class="form-row">
+ <label for="date">日期</label>
+ <input type="date" id="date" required>
+ </div>
+ <div class="form-row">
+ <label for="record-account">戶口（必選）</label>
+ <select id="record-account" required></select>
+ </div>
+ <div class="form-row">
+ <label for="category">分類</label>
+ <select id="category" required>
+ <option value="餐飲">🍔 餐飲</option>
+ <option value="交通">🚗 交通</option>
+ <option value="購物">🛍️ 購物</option>
+ <option value="娛樂">🎮 娛樂</option>
+ <option value="居住">🏠 居住</option>
+ <option value="母嬰">👶 母嬰</option>
+ <option value="保險費">🛡️ 保險費</option>
+ <option value="學貸">🎓 學貸</option>
+ <option value="生活費">💵 生活費</option>
+ <option value="薪資">💼 薪資</option>
+ <option value="電話費">📞 電話費</option>
+ <option value="電費">⚡ 電費</option>
+ <option value="淘寶">🛒 淘寶</option>
+ <option value="上網費">🌐 上網費</option>
+ <option value="醫療">🏥 醫療</option>
+ <option value="信用卡還款">💳 信用卡還款</option>
+ <option value="戶口調整">⚖️ 戶口調整</option>
+ <option value="其他">🏷️ 其他</option>
+ </select>
+ </div>
+ <div class="form-row hidden" id="custom-category-row">
+ <label for="custom-category">自訂分類</label>
+ <input type="text" id="custom-category" placeholder="輸入自訂分類">
+ </div>
+ <div class="form-row hidden" id="repay-to-row">
+ <label for="repay-to-account">還款至信用卡</label>
+ <select id="repay-to-account"></select>
+ </div>
+ <div class="form-row" id="advance-toggle-row">
+ <label class="checkbox-label">
+ <input type="checkbox" id="is-advance"> 這是代墊 / AA
+ </label>
+ </div>
+ <div id="advance-fields" class="hidden">
+ <div class="form-row">
+ <label for="advance-self-amt">自費金額（可為 0）</label>
+ <input type="number" id="advance-self-amt" step="0.01" min="0" value="0">
+ </div>
+ <div class="form-row">
+ <label for="advance-recv-amt">應收金額</label>
+ <input type="number" id="advance-recv-amt" step="0.01" min="0" value="0">
+ <p class="field-hint">預設 = 總額 − 自費，可手動修改</p>
+ </div>
+ </div>
+ <div class="form-row">
+ <label for="note">備註</label>
+ <input type="text" id="note" placeholder="選填">
+ </div>
+ <div class="form-actions">
+ <button type="button" id="btn-cancel" class="btn">取消</button>
+ <button type="submit" class="btn primary">儲存</button>
+ </div>
+ </form>
+ </div>
+ </div>
+
+ <!-- 戶口 Modal -->
+ <div id="account-modal-overlay" class="modal-overlay hidden">
+ <div class="modal">
+ <div class="modal-header">
+ <h3 id="account-modal-title">新增戶口</h3>
+ <button type="button" id="btn-close-account-modal" class="btn-icon">×</button>
+ </div>
+ <form id="account-form">
+ <input type="hidden" id="account-edit-id">
+ <div class="form-row">
+ <label for="account-name">戶口名稱</label>
+ <input type="text" id="account-name" placeholder="例如：中銀澳門" required>
+ </div>
+ <div class="form-row">
+ <label for="account-type">類型</label>
+ <select id="account-type" required>
+ <option value="現金">💵 現金</option>
+ <option value="銀行">🏦 銀行</option>
+ <option value="信用卡">💳 信用卡（正數＝欠款）</option>
+ <option value="電子錢包">📱 電子錢包</option>
+ <option value="投資">📈 投資</option>
+ <option value="應收帳款">🧾 應收帳款（僅可一個）</option>
+ <option value="其他">🏷️ 其他</option>
+ </select>
+ </div>
+ <div class="form-row hidden" id="linked-bank-row">
+ <label for="linked-bank">扣帳銀行戶口</label>
+ <select id="linked-bank"></select>
+ <p class="field-hint">記支出時只從綁定銀行扣款</p>
+ </div>
+ <div class="form-row" id="balances-row">
+ <label>各貨幣餘額</label>
+ <div class="multi-currency">
+ <div class="mc-row"><span>MOP</span><input type="number" id="acc-bal-mop" step="0.01" value="0"></div>
+ <div class="mc-row"><span>HKD</span><input type="number" id="acc-bal-hkd" step="0.01" value="0"></div>
+ <div class="mc-row"><span>CNY</span><input type="number" id="acc-bal-cny" step="0.01" value="0"></div>
+ </div>
+ </div>
+ <div class="form-row hidden" id="interest-row">
+ <label>年利率（銀行）</label>
+ <div class="amount-row">
+ <input type="number" id="acc-interest-rate" step="0.01" min="0" placeholder="例如 2.5" value="0">
+ <select id="acc-interest-period">
+ <option value="daily">日息（自動每日入帳）</option>
+ <option value="monthly">月息</option>
+ <option value="yearly">年息</option>
+ </select>
+ </div>
+ <p class="field-hint">填年利率 %；選日息時每次開啟 App 會補入未入帳利息</p>
+ </div>
+ <div class="form-row hidden" id="adjust-row">
+ <label>調整金額（寫入流水）</label>
+ <div class="adjust-box">
+ <select id="adjust-action">
+ <option value="">不調整</option>
+ <option value="increase">增加</option>
+ <option value="decrease">減少</option>
+ </select>
+ <select id="adjust-currency">
+ <option value="MOP">MOP</option>
+ <option value="HKD">HKD</option>
+ <option value="CNY">CNY</option>
+ </select>
+ <input type="number" id="adjust-amount" step="0.01" min="0" placeholder="金額">
+ </div>
+ <input type="text" id="adjust-note" placeholder="備註（選填）" style="margin-top:8px">
+ </div>
+ <div class="form-row">
+ <label for="account-note">備註</label>
+ <input type="text" id="account-note" placeholder="選填">
+ </div>
+ <div class="form-actions">
+ <button type="button" id="btn-cancel-account" class="btn">取消</button>
+ <button type="submit" class="btn primary">儲存</button>
+ </div>
+ </form>
+ </div>
+ </div>
+
+ <div id="liability-modal-overlay" class="modal-overlay hidden">
+ <div class="modal">
+ <div class="modal-header">
+ <h3 id="liability-modal-title">新增扣減項</h3>
+ <button type="button" id="btn-close-liability-modal" class="btn-icon">×</button>
+ </div>
+ <form id="liability-form">
+ <input type="hidden" id="liability-edit-id">
+ <div class="form-row">
+ <label for="liability-name">名稱</label>
+ <input type="text" id="liability-name" required>
+ </div>
+ <div class="form-row">
+ <label>各貨幣金額</label>
+ <div class="multi-currency">
+ <div class="mc-row"><span>MOP</span><input type="number" id="liab-bal-mop" step="0.01" value="0"></div>
+ <div class="mc-row"><span>HKD</span><input type="number" id="liab-bal-hkd" step="0.01" value="0"></div>
+ <div class="mc-row"><span>CNY</span><input type="number" id="liab-bal-cny" step="0.01" value="0"></div>
+ </div>
+ </div>
+ <div class="form-row">
+ <label for="liability-note">備註</label>
+ <input type="text" id="liability-note" placeholder="選填">
+ </div>
+ <div class="form-actions">
+ <button type="button" id="btn-cancel-liability" class="btn">取消</button>
+ <button type="submit" class="btn primary">儲存</button>
+ </div>
+ </form>
+ </div>
+ </div>
+
+ <div id="repay-modal-overlay" class="modal-overlay hidden">
+ <div class="modal">
+ <div class="modal-header">
+ <h3>信用卡還款</h3>
+ <button type="button" id="btn-close-repay" class="btn-icon">×</button>
+ </div>
+ <form id="repay-form">
+ <div class="form-row">
+ <label for="repay-from">還款來源</label>
+ <select id="repay-from" required></select>
+ </div>
+ <div class="form-row">
+ <label for="repay-to">還款至信用卡</label>
+ <select id="repay-to" required></select>
+ </div>
+ <div class="form-row">
+ <label for="repay-currency">貨幣</label>
+ <select id="repay-currency" required>
+ <option value="MOP">MOP</option>
+ <option value="HKD">HKD</option>
+ <option value="CNY">CNY</option>
+ </select>
+ </div>
+ <div class="form-row">
+ <label for="repay-amount">金額</label>
+ <input type="number" id="repay-amount" step="0.01" min="0.01" required>
+ </div>
+ <div class="form-row">
+ <label for="repay-date">日期</label>
+ <input type="date" id="repay-date" required>
+ </div>
+ <div class="form-row">
+ <label for="repay-note">備註</label>
+ <input type="text" id="repay-note" placeholder="選填">
+ </div>
+ <div class="form-actions">
+ <button type="button" id="btn-cancel-repay" class="btn">取消</button>
+ <button type="submit" class="btn primary">確認還款</button>
+ </div>
+ </form>
+ </div>
+ </div>
+
+ <!-- 內部轉帳 -->
+ <div id="transfer-modal-overlay" class="modal-overlay hidden">
+ <div class="modal">
+ <div class="modal-header">
+ <h3 id="transfer-modal-title">內部轉帳</h3>
+ <button type="button" id="btn-close-transfer" class="btn-icon">×</button>
+ </div>
+ <form id="transfer-form">
+ <input type="hidden" id="transfer-edit-id">
+ <div class="form-row">
+ <label for="transfer-from">轉出戶口</label>
+ <select id="transfer-from" required></select>
+ </div>
+ <div class="form-row">
+ <label>轉出金額</label>
+ <div class="amount-row">
+ <select id="transfer-from-currency" required>
+ <option value="MOP">MOP</option>
+ <option value="HKD">HKD</option>
+ <option value="CNY">CNY</option>
+ </select>
+ <input type="number" id="transfer-from-amount" step="0.01" min="0.01" required>
+ </div>
+ </div>
+ <div class="form-row">
+ <label for="transfer-to">轉入戶口</label>
+ <select id="transfer-to" required></select>
+ </div>
+ <div class="form-row">
+ <label>轉入金額</label>
+ <div class="amount-row">
+ <select id="transfer-to-currency" required>
+ <option value="MOP">MOP</option>
+ <option value="HKD">HKD</option>
+ <option value="CNY">CNY</option>
+ </select>
+ <input type="number" id="transfer-to-amount" step="0.01" min="0.01" required>
+ </div>
+ <p class="field-hint">可依匯率自動帶入，亦可手動修改（支援跨貨幣）</p>
+ </div>
+ <div class="form-row">
+ <label for="transfer-date">日期</label>
+ <input type="date" id="transfer-date" required>
+ </div>
+ <div class="form-row">
+ <label for="transfer-note">備註</label>
+ <input type="text" id="transfer-note" placeholder="選填">
+ </div>
+ <div class="form-actions">
+ <button type="button" id="btn-cancel-transfer" class="btn">取消</button>
+ <button type="submit" class="btn primary">確認轉帳</button>
+ </div>
+ </form>
+ </div>
+ </div>
+
+ <div id="mpf-account-modal-overlay" class="modal-overlay hidden">
+ <div class="modal">
+ <div class="modal-header">
+ <h3 id="mpf-account-modal-title">新增強積金戶口</h3>
+ <button type="button" id="btn-close-mpf-account" class="btn-icon">×</button>
+ </div>
+ <form id="mpf-account-form">
+ <input type="hidden" id="mpf-account-edit-id">
+ <div class="form-row">
+ <label for="mpf-account-name">名稱</label>
+ <input type="text" id="mpf-account-name" required>
+ </div>
+ <div class="form-row">
+ <label for="mpf-account-currency">貨幣</label>
+ <select id="mpf-account-currency" required>
+ <option value="HKD">HKD</option>
+ <option value="MOP">MOP</option>
+ </select>
+ </div>
+ <div class="form-row">
+ <label for="mpf-account-balance">目前結餘</label>
+ <input type="number" id="mpf-account-balance" step="0.01" value="0" required>
+ </div>
+ <div class="form-row">
+ <label for="mpf-account-note">備註</label>
+ <input type="text" id="mpf-account-note" placeholder="選填">
+ </div>
+ <div class="form-actions">
+ <button type="button" id="btn-cancel-mpf-account" class="btn">取消</button>
+ <button type="submit" class="btn primary">儲存</button>
+ </div>
+ </form>
+ </div>
+ </div>
+
+ <div id="mpf-change-modal-overlay" class="modal-overlay hidden">
+ <div class="modal">
+ <div class="modal-header">
+ <h3 id="mpf-change-modal-title">紀錄結餘</h3>
+ <button type="button" id="btn-close-mpf-change" class="btn-icon">×</button>
+ </div>
+ <form id="mpf-change-form">
+ <input type="hidden" id="mpf-change-edit-id">
+ <input type="hidden" id="mpf-change-account-id">
+ <div class="form-row">
+ <label for="mpf-change-month">月份</label>
+ <input type="month" id="mpf-change-month" required>
+ </div>
+ <div class="form-row">
+ <label for="mpf-change-amount">該月結餘 (HKD)</label>
+ <input type="number" id="mpf-change-amount" step="0.01" required>
+ <p class="field-hint">輸入絕對結餘，自動計算較上月漲跌</p>
+ </div>
+ <div class="form-row">
+ <label for="mpf-change-note">備註</label>
+ <input type="text" id="mpf-change-note" placeholder="選填">
+ </div>
+ <div class="form-actions">
+ <button type="button" id="btn-cancel-mpf-change" class="btn">取消</button>
+ <button type="submit" class="btn primary">儲存</button>
+ </div>
+ </form>
+ </div>
+ </div>
+
+ 
+ <!-- 代墊 Modal -->
+ <div id="advance-modal-overlay" class="modal-overlay hidden">
+ <div class="modal">
+ <div class="modal-header">
+ <h3>代墊 / AA</h3>
+ <button type="button" id="btn-close-advance" class="btn-icon">×</button>
+ </div>
+ <form id="advance-form">
+ <div class="form-row">
+ <label for="advance-pay-account">支付戶口</label>
+ <select id="advance-pay-account" required></select>
+ </div>
+ <div class="form-row">
+ <label>總金額</label>
+ <div class="amount-row">
+ <select id="advance-currency" required>
+ <option value="MOP">MOP</option>
+ <option value="HKD">HKD</option>
+ <option value="CNY">CNY</option>
+ </select>
+ <input type="number" id="advance-total" step="0.01" min="0.01" required>
+ </div>
+ </div>
+ <div class="form-row">
+ <label for="advance-self">自費金額（可為 0）</label>
+ <input type="number" id="advance-self" step="0.01" min="0" value="0">
+ </div>
+ <div class="form-row">
+ <label for="advance-recv">應收金額</label>
+ <input type="number" id="advance-recv" step="0.01" min="0" value="0">
+ <p class="field-hint">預設 = 總額 − 自費，可手動修改</p>
+ </div>
+ <div class="form-row">
+ <label for="advance-category">自費分類</label>
+ <select id="advance-category"></select>
+ </div>
+ <div class="form-row">
+ <label for="advance-date">日期</label>
+ <input type="date" id="advance-date" required>
+ </div>
+ <div class="form-row">
+ <label for="advance-note">備註</label>
+ <input type="text" id="advance-note" placeholder="例如：和誰 AA、事由">
+ </div>
+ <div class="form-actions">
+ <button type="button" id="btn-cancel-advance" class="btn">取消</button>
+ <button type="submit" class="btn primary">儲存代墊</button>
+ </div>
+ </form>
+ </div>
+ </div>
+
+ <!-- 收回應收 Modal -->
+ <div id="collect-modal-overlay" class="modal-overlay hidden">
+ <div class="modal">
+ <div class="modal-header">
+ <h3>收回應收</h3>
+ <button type="button" id="btn-close-collect" class="btn-icon">×</button>
+ </div>
+ <form id="collect-form">
+ <div class="form-row">
+ <label for="collect-to-account">收回至</label>
+ <select id="collect-to-account" required></select>
+ </div>
+ <div class="form-row">
+ <label>金額</label>
+ <div class="amount-row">
+ <select id="collect-currency" required>
+ <option value="MOP">MOP</option>
+ <option value="HKD">HKD</option>
+ <option value="CNY">CNY</option>
+ </select>
+ <input type="number" id="collect-amount" step="0.01" min="0.01" required>
+ </div>
+ </div>
+ <div class="form-row">
+ <label for="collect-date">日期</label>
+ <input type="date" id="collect-date" required>
+ </div>
+ <div class="form-row">
+ <label for="collect-note">備註</label>
+ <input type="text" id="collect-note" placeholder="選填">
+ </div>
+ <div class="form-actions">
+ <button type="button" id="btn-cancel-collect" class="btn">取消</button>
+ <button type="submit" class="btn primary">確認收回</button>
+ </div>
+ </form>
+ </div>
+ </div>
+
+
+ <!-- 存錢 Modal -->
+ <div id="savings-modal-overlay" class="modal-overlay hidden">
+ <div class="modal">
+ <div class="modal-header">
+ <h3>存錢</h3>
+ <button type="button" id="btn-close-savings" class="btn-icon">×</button>
+ </div>
+ <form id="savings-form">
+ <div class="form-row">
+ <label for="savings-account">來源戶口</label>
+ <select id="savings-account" required></select>
+ </div>
+ <div class="form-row">
+ <label>金額</label>
+ <div class="amount-row">
+ <select id="savings-currency" required>
+ <option value="MOP">MOP</option>
+ <option value="HKD">HKD</option>
+ <option value="CNY">CNY</option>
+ </select>
+ <input type="number" id="savings-amount" step="0.01" min="0.01" required>
+ </div>
+ </div>
+ <div class="form-row">
+ <label for="savings-date">日期</label>
+ <input type="date" id="savings-date" required>
+ </div>
+ <div class="form-row">
+ <label for="savings-note">備註</label>
+ <input type="text" id="savings-note" placeholder="例如：每月儲蓄">
+ </div>
+ <p class="field-hint" style="padding:0 0 10px">存錢不計入消費支出，會減少本月結餘；僅記錄歸屬戶口，不會實際扣款。</p>
+ <div class="form-actions">
+ <button type="button" id="btn-cancel-savings" class="btn">取消</button>
+ <button type="submit" class="btn primary">確認存錢</button>
+ </div>
+ </form>
+ </div>
+ </div>
+
+<div id="rates-modal-overlay" class="modal-overlay hidden">
+ <div class="modal">
+ <div class="modal-header">
+ <h3>匯率設定</h3>
+ <button type="button" id="btn-close-rates" class="btn-icon">×</button>
+ </div>
+ <form id="rates-form">
+ <p class="rates-hint">摘要與資產依此換算為 MOP</p>
+ <div class="form-row">
+ <label for="rate-hkd">1 HKD = ? MOP</label>
+ <input type="number" id="rate-hkd" step="0.0001" min="0.0001" required>
+ </div>
+ <div class="form-row">
+ <label for="rate-cny">1 CNY = ? MOP</label>
+ <input type="number" id="rate-cny" step="0.0001" min="0.0001" required>
+ </div>
+ <div class="form-row">
+ <label for="rate-hkd-cny">1 HKD = ? CNY</label>
+ <input type="number" id="rate-hkd-cny" step="0.0001" min="0.0001" required>
+ </div>
+ <div class="form-actions">
+ <button type="button" id="btn-reset-rates" class="btn">還原預設</button>
+ <button type="submit" class="btn primary">儲存</button>
+ </div>
+ </form>
+ </div>
+ </div>
+
+ <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+ <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+ <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+ <script src="app.js"></script>
+ <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(err => console.info('SW 註冊略過', err));
+    });
+  }
+ </script>
+</body>
+</html>
