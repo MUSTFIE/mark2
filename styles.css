@@ -886,11 +886,28 @@ body {
   border-radius: 10px;
   font-size: 1rem;
 }
-.budget-cats-label {
-  font-size: 0.8rem;
-  color: var(--muted);
-  margin-bottom: 6px;
+.budget-cats-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  color: var(--text, #111);
+  cursor: pointer;
+  text-align: left;
 }
+.budget-cats-toggle-label { font-weight: 600; }
+.budget-cats-summary {
+  flex: 1;
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-align: right;
+}
+.budget-cats-wrap { margin-top: 4px; }
+.budget-cats-wrap.collapsed { display: none; }
 .budget-cats {
   display: flex;
   flex-wrap: wrap;
@@ -920,6 +937,19 @@ body {
   font-size: 0.72rem;
   color: var(--muted);
   margin: 4px 0 0;
+}
+.custom-cat-records { margin-top: 12px; }
+.custom-cat-records-title {
+  font-size: 0.85rem;
+  font-weight: 650;
+  margin-bottom: 8px;
+  color: var(--muted);
+}
+.custom-cat-records .day-group { margin-bottom: 8px; }
+.custom-cat-records .day-header {
+  font-size: 0.8rem;
+  color: var(--muted);
+  padding: 4px 0;
 }
 .summary-cards.summary-analysis-month {
   grid-template-columns: repeat(2, 1fr);
