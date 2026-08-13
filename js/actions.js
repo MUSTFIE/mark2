@@ -488,13 +488,15 @@ function renderCustomCatSum() {
   const cats = Object.keys(byCat).sort((a, b) => byCat[b] - byCat[a]);
   if (!cats.length) {
     box.innerHTML = '<div class="empty-hint">本月尚無支出可加總</div>';
+    const recBox = $('#custom-cat-records');
+    if (recBox) recBox.innerHTML = '';
     return;
   }
   let total = 0;
   const chips = cats.map(c => {
     const on = selected.has(c);
     if (on) total += byCat[c];
-    return `<label class="cat-sum-chip${on ? ' active' : ''}" data-cat-label="${escapeHtml(c)}">
+    return `<label class="cat-sum-chip${on ? ' active' : ''}">
       <input type="checkbox" data-cat="${escapeHtml(c)}" ${on ? 'checked' : ''}>
       <span class="cat-sum-label">${CATEGORY_ICONS[c] || '🏷️'} ${escapeHtml(c)}</span>
       <span class="cat-sum-amt">${formatMoney(byCat[c])}</span>
@@ -502,8 +504,7 @@ function renderCustomCatSum() {
   }).join('');
   box.innerHTML = `
     <div class="cat-sum-chips">${chips}</div>
-    <div class="cat-sum-total">已選合計：<strong>MOP ${formatMoney(total)}</strong></div>
-    <p class="cat-sum-hint">點分類名稱可查看該分類本月紀錄</p>`;
+    <div class="cat-sum-total">已選合計：<strong>MOP ${formatMoney(total)}</strong></div>`;
   box.querySelectorAll('input[type=checkbox]').forEach(cb => {
     cb.addEventListener('change', () => {
       const next = [...box.querySelectorAll('input[type=checkbox]:checked')].map(x => x.dataset.cat);
@@ -511,52 +512,60 @@ function renderCustomCatSum() {
       renderCustomCatSum();
     });
   });
-  box.querySelectorAll('.cat-sum-chip').forEach(chip => {
-    const openList = (e) => {
-      if (e.target.closest('input[type=checkbox]')) return;
-      e.preventDefault();
-      const cat = chip.dataset.catLabel || chip.querySelector('input')?.dataset.cat;
-      if (cat) openCategoryRecordsModal(cat);
-    };
-    chip.querySelector('.cat-sum-label')?.addEventListener('click', openList);
-    chip.querySelector('.cat-sum-amt')?.addEventListener('click', openList);
-  });
+  renderCustomCatRecords(selected);
 }
 
-/** 彈出某分類本月支出紀錄列表 */
-function openCategoryRecordsModal(category) {
-  const overlay = $('#cat-records-modal-overlay');
-  const listEl = $('#cat-records-list');
-  const titleEl = $('#cat-records-title');
-  if (!overlay || !listEl) return;
-  if (titleEl) titleEl.textContent = `${CATEGORY_ICONS[category] || '🏷️'} ${category} · 本月紀錄`;
+/** 在自訂加總下方列出所有已勾選分類的本月流水 */
+function renderCustomCatRecords(selectedSet) {
+  const recBox = $('#custom-cat-records');
+  if (!recBox) return;
+  const selected = selectedSet || new Set(loadCustomCatSum());
+  if (!selected.size) {
+    recBox.innerHTML = '';
+    return;
+  }
   const list = getMonthRecords().filter(r => {
     if (isRepayment(r) || isCollectReceivable(r) || isInterest(r) || isTransfer(r) || isSavings(r) || isAdjustment(r)) return false;
     if (isAdvance(r)) {
       const selfAmt = Number(r.selfAmount) || 0;
-      return selfAmt > 0 && (r.category || '其他') === category;
+      return selfAmt > 0 && selected.has(r.category || '其他');
     }
-    return r.type === 'expense' && (r.category || '其他') === category;
+    return r.type === 'expense' && selected.has(r.category || '其他');
   }).sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || String(b.id).localeCompare(String(a.id)));
 
   if (!list.length) {
-    listEl.innerHTML = '<div class="empty-hint">此分類本月尚無紀錄</div>';
-  } else {
-    listEl.innerHTML = list.map(r => buildRecordItemHtml(r)).join('');
-    bindRecordActions(listEl);
+    recBox.innerHTML = '<div class="empty-hint">已選分類本月尚無紀錄</div>';
+    return;
   }
-  overlay.classList.remove('hidden');
-}
-function closeCategoryRecordsModal() {
-  $('#cat-records-modal-overlay')?.classList.add('hidden');
+  // 依日期分組，與記帳頁類似
+  const byDate = {};
+  list.forEach(r => {
+    const d = String(r.date || '').slice(0, 10);
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push(r);
+  });
+  const dates = Object.keys(byDate).sort((a, b) => b.localeCompare(a));
+  let html = '<div class="custom-cat-records-title">已選分類流水</div>';
+  dates.forEach(date => {
+    html += `<div class="day-group expanded">
+      <div class="day-header"><span class="day-date">${date}</span></div>
+      <div class="day-records">${byDate[date].map(r => buildRecordItemHtml(r)).join('')}</div>
+    </div>`;
+  });
+  recBox.innerHTML = html;
+  bindRecordActions(recBox);
 }
 
 /** 預算設定面板（分析頁月份上方） */
+let budgetCatsExpanded = false;
 function renderBudgetPanel() {
   const panel = $('#budget-panel');
   if (!panel) return;
   const amountEl = $('#budget-amount-input');
   const catsBox = $('#budget-cats');
+  const wrap = $('#budget-cats-wrap');
+  const toggle = $('#btn-toggle-budget-cats');
+  const summaryEl = $('#budget-cats-summary');
   if (amountEl && document.activeElement !== amountEl) {
     amountEl.value = budget.amount > 0 ? budget.amount : '';
   }
@@ -572,6 +581,18 @@ function renderBudgetPanel() {
     if (!exclude.has(c) && !allCats.includes(c)) allCats.push(c);
   });
   const selected = new Set(budget.categories || []);
+  if (summaryEl) {
+    if (!selected.size) summaryEl.textContent = '全部消費';
+    else summaryEl.textContent = `已選 ${selected.size} 項`;
+  }
+  if (wrap) {
+    wrap.classList.toggle('collapsed', !budgetCatsExpanded);
+  }
+  if (toggle) {
+    toggle.setAttribute('aria-expanded', budgetCatsExpanded ? 'true' : 'false');
+    const chev = toggle.querySelector('.sec-chevron');
+    if (chev) chev.textContent = budgetCatsExpanded ? '▼' : '▸';
+  }
   if (catsBox) {
     catsBox.innerHTML = allCats.map(c => {
       const on = selected.has(c);
