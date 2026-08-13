@@ -132,13 +132,13 @@ function init() {
       if (e.key === 'Enter') { e.preventDefault(); saveBudgetFromUI(); }
     });
   }
-  // 分類紀錄 modal
-  const btnCloseCatRec = $('#btn-close-cat-records');
-  if (btnCloseCatRec) btnCloseCatRec.addEventListener('click', closeCategoryRecordsModal);
-  const catRecOverlay = $('#cat-records-modal-overlay');
-  if (catRecOverlay) catRecOverlay.addEventListener('click', e => {
-    if (e.target.id === 'cat-records-modal-overlay') closeCategoryRecordsModal();
-  });
+  const btnToggleBudgetCats = $('#btn-toggle-budget-cats');
+  if (btnToggleBudgetCats) {
+    btnToggleBudgetCats.addEventListener('click', () => {
+      budgetCatsExpanded = !budgetCatsExpanded;
+      renderBudgetPanel();
+    });
+  }
 
   // export
   $('#btn-export').addEventListener('click', () => $('#export-modal-overlay').classList.remove('hidden'));
