@@ -124,9 +124,15 @@
  <label for="budget-amount-input">預算金額 (MOP)</label>
  <input type="number" id="budget-amount-input" min="0" step="1" placeholder="例如 10000">
  </div>
- <div class="budget-cats-label">納入預算的支出類型</div>
+ <button type="button" id="btn-toggle-budget-cats" class="budget-cats-toggle" aria-expanded="false">
+ <span class="budget-cats-toggle-label">納入預算的支出類型</span>
+ <span id="budget-cats-summary" class="budget-cats-summary"></span>
+ <span class="sec-chevron">▸</span>
+ </button>
+ <div id="budget-cats-wrap" class="budget-cats-wrap collapsed">
  <div id="budget-cats" class="budget-cats"></div>
  <p class="budget-hint">未勾選任何分類時，所有消費支出皆計入預算</p>
+ </div>
  </section>
  <div class="summary-cards summary-analysis-month">
  <div class="card">
@@ -157,6 +163,7 @@
  <section class="chart-section" id="custom-cat-sum-section">
  <h3>自訂支出加總（勾選要合計的分類）</h3>
  <div id="custom-cat-sum"></div>
+ <div id="custom-cat-records" class="custom-cat-records"></div>
  </section>
  </div>
  <div id="analysis-year" class="analysis-panel">
