@@ -838,4 +838,3 @@ function applyRecordEffect(rec) {
   if (acc.type === '信用卡') applyBalanceDelta(effectId, rec.currency, rec.type === 'expense' ? amt : -amt);
   else applyBalanceDelta(effectId, rec.currency, rec.type === 'expense' ? -amt : amt);
 }
-
