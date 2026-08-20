@@ -564,73 +564,110 @@ function renderAccounts() {
     nets.HKD += Number(b.HKD) || 0;
     nets.CNY += Number(b.CNY) || 0;
   });
-  $('#net-mop').textContent = money('MOP', nets.MOP);
-  $('#net-hkd').textContent = money('HKD', nets.HKD);
-  $('#net-cny').textContent = money('CNY', nets.CNY);
-  $('#net-total-mop').textContent = money('MOP', toMOP(nets.MOP, 'MOP') + toMOP(nets.HKD, 'HKD') + toMOP(nets.CNY, 'CNY'));
+  const netMopEl = $('#net-mop');
+  const netHkdEl = $('#net-hkd');
+  const netCnyEl = $('#net-cny');
+  const netTotalEl = $('#net-total-mop');
+  if (netMopEl) netMopEl.textContent = money('MOP', nets.MOP);
+  if (netHkdEl) netHkdEl.textContent = money('HKD', nets.HKD);
+  if (netCnyEl) netCnyEl.textContent = money('CNY', nets.CNY);
+  if (netTotalEl) netTotalEl.textContent = money('MOP', toMOP(nets.MOP, 'MOP') + toMOP(nets.HKD, 'HKD') + toMOP(nets.CNY, 'CNY'));
 
+  // 主戶口：排除電子錢包、現金、應收帳款；扁平列表（無類型分組）
+  const MAIN_EXCLUDE = new Set(['電子錢包', '現金', '應收帳款']);
+  const typeRank = (t) => {
+    const i = TYPE_ORDER.indexOf(t);
+    return i >= 0 ? i : 999;
+  };
+  const mainAccounts = accounts
+    .filter(a => !MAIN_EXCLUDE.has(a.type))
+    .slice()
+    .sort((a, b) => typeRank(a.type) - typeRank(b.type) || String(a.name).localeCompare(String(b.name), 'zh'));
   const container = $('#accounts-by-type');
-  container.innerHTML = '';
-  if (!accounts.length) {
-    $('#no-accounts').style.display = 'block';
-    return;
+  if (container) {
+    container.innerHTML = '';
+    container.classList.add('accounts-flat');
+    if (!mainAccounts.length) {
+      const noAcc = $('#no-accounts');
+      if (noAcc) noAcc.style.display = 'block';
+    } else {
+      const noAcc = $('#no-accounts');
+      if (noAcc) noAcc.style.display = 'none';
+      mainAccounts.forEach(a => {
+        const b = a.balances || { MOP: 0, HKD: 0, CNY: 0 };
+        const totalMop = balancesToMOP(b);
+        const item = document.createElement('div');
+        item.className = 'account-item account-row';
+        item.dataset.id = a.id;
+        item.setAttribute('role', 'button');
+        item.tabIndex = 0;
+        const typeIcon = ACCOUNT_TYPE_ICONS[a.type] || '';
+        item.innerHTML = `
+          <div class="account-row-main">
+            <div class="account-name">${escapeHtml(a.name)}</div>
+            <div class="account-type-tag">${typeIcon} ${escapeHtml(a.type || '')}</div>
+          </div>
+          <div class="account-row-right">
+            <div class="account-row-amount">${money('MOP', totalMop)}</div>
+            <span class="account-row-chevron">›</span>
+          </div>`;
+        container.appendChild(item);
+      });
+      container.querySelectorAll('.account-row').forEach(item => {
+        const open = () => openAccountDetailModal(item.dataset.id);
+        item.addEventListener('click', open);
+        item.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+        });
+      });
+    }
   }
-  $('#no-accounts').style.display = 'none';
 
-  TYPE_ORDER.forEach(type => {
-    const group = accounts.filter(a => a.type === type);
-    if (!group.length) return;
-    const typeOpen = expandedAccountTypes.has(type);
-    const section = document.createElement('div');
-    section.className = 'type-group' + (typeOpen ? ' expanded' : '');
-    const groupTotal = group.reduce((s, a) => s + balancesToMOP(a.balances), 0);
-    section.innerHTML = `<button type="button" class="type-group-toggle" data-type="${type}">
-      <span>${ACCOUNT_TYPE_ICONS[type] || ''} ${type} <span class="account-meta">（${group.length}）</span></span>
-      <span class="type-group-right">${money('MOP', groupTotal)} <span class="sec-chevron">${typeOpen ? '▼' : '▸'}</span></span>
-    </button>
-    <div class="type-group-body" style="display:${typeOpen ? 'block' : 'none'}"></div>`;
-    const body = section.querySelector('.type-group-body');
-
-    group.forEach(a => {
-      const b = a.balances || { MOP: 0, HKD: 0, CNY: 0 };
-      const isWallet = a.type === '電子錢包';
-      const totalMop = balancesToMOP(b);
-      // 只顯示名稱 + 折合 MOP
-      const item = document.createElement('div');
-      item.className = 'account-item account-row';
-      item.dataset.id = a.id;
-      item.setAttribute('role', 'button');
-      item.tabIndex = 0;
-      item.innerHTML = `
-        <div class="account-row-main">
-          <div class="account-name">${escapeHtml(a.name)}</div>
-        </div>
-        <div class="account-row-right">
-          <div class="account-row-amount">${isWallet ? '—' : money('MOP', totalMop)}</div>
-          <span class="account-row-chevron">›</span>
-        </div>`;
-      body.appendChild(item);
-    });
-    container.appendChild(section);
+  // 其他：電子錢包、現金、應收帳款（扣減項下方）
+  const OTHER_TYPES = ['電子錢包', '現金', '應收帳款'];
+  const otherAccounts = [];
+  OTHER_TYPES.forEach(type => {
+    accounts.filter(a => a.type === type).forEach(a => otherAccounts.push(a));
   });
-
-  container.querySelectorAll('.type-group-toggle').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const t = btn.dataset.type;
-      if (expandedAccountTypes.has(t)) expandedAccountTypes.delete(t);
-      else expandedAccountTypes.add(t);
-      renderAccounts();
-    });
-  });
-
-  container.querySelectorAll('.account-row').forEach(item => {
-    const open = () => openAccountDetailModal(item.dataset.id);
-    item.addEventListener('click', open);
-    item.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
-    });
-  });
+  // 若有未在 OTHER_TYPES 的，不處理；按 TYPE_ORDER 順序已涵蓋
+  const otherEl = $('#accounts-other-list');
+  const noOther = $('#no-other-accounts');
+  if (otherEl) {
+    otherEl.innerHTML = '';
+    if (!otherAccounts.length) {
+      if (noOther) noOther.style.display = 'block';
+    } else {
+      if (noOther) noOther.style.display = 'none';
+      otherAccounts.forEach(a => {
+        const b = a.balances || { MOP: 0, HKD: 0, CNY: 0 };
+        const isWallet = a.type === '電子錢包';
+        const totalMop = balancesToMOP(b);
+        const item = document.createElement('div');
+        item.className = 'account-item account-row';
+        item.dataset.id = a.id;
+        item.setAttribute('role', 'button');
+        item.tabIndex = 0;
+        const typeIcon = ACCOUNT_TYPE_ICONS[a.type] || '';
+        item.innerHTML = `
+          <div class="account-row-main">
+            <div class="account-name">${escapeHtml(a.name)}</div>
+            <div class="account-type-tag">${typeIcon} ${escapeHtml(a.type || '')}</div>
+          </div>
+          <div class="account-row-right">
+            <div class="account-row-amount">${isWallet ? '—' : money('MOP', totalMop)}</div>
+            <span class="account-row-chevron">›</span>
+          </div>`;
+        otherEl.appendChild(item);
+      });
+      otherEl.querySelectorAll('.account-row').forEach(item => {
+        const open = () => openAccountDetailModal(item.dataset.id);
+        item.addEventListener('click', open);
+        item.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+        });
+      });
+    }
+  }
 }
 
 function openAccountDetailModal(accountId) {
