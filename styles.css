@@ -814,30 +814,47 @@ body {
   }
 }
 
-/* 戶口幣別三卡（無總結餘） */
+/* 戶口幣別三卡：貨幣只顯示一次，單行彈性寬度 */
 .summary-cards.currency-three-compact {
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-wrap: nowrap;
   gap: 6px;
   margin-bottom: 0;
+  align-items: stretch;
 }
 .summary-cards.currency-three-compact .card {
-  padding: 8px 6px;
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 8px 10px;
   border-radius: 12px;
+  text-align: center;
 }
 .summary-cards.currency-three-compact .card .label {
   font-size: 0.62rem;
   margin-bottom: 2px;
 }
 .summary-cards.currency-three-compact .card .value {
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  word-break: break-all;
+  white-space: nowrap;
+  word-break: normal;
 }
 @media (max-width: 400px) {
-  .summary-cards.currency-three-compact .card .value {
-    font-size: 0.72rem;
+  .summary-cards.currency-three-compact {
+    gap: 4px;
   }
+  .summary-cards.currency-three-compact .card {
+    padding: 8px 6px;
+  }
+  .summary-cards.currency-three-compact .card .value {
+    font-size: 0.75rem;
+  }
+}
+
+/* 展開戶口時隱藏幣別摘要（含手機） */
+#section-accounts.expanded > .section-summary {
+  display: none !important;
 }
 
 /* 其他戶口列表（錢包／現金／應收） */
@@ -1438,10 +1455,6 @@ body {
 /* 收合時仍顯示摘要 */
 .section-summary {
   margin-bottom: 10px;
-}
-/* 展開戶口時隱藏幣別摘要 */
-#section-accounts.expanded > .section-summary {
-  display: none;
 }
 .section-header-total {
   font-size: 0.85rem;
