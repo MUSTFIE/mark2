@@ -72,7 +72,7 @@ async function clearAllData() {
   expandedAccountTypes = new Set();
   expandedMpfId = null;
   expandedAssetGroup = null;
-  sectionCollapseState = { dist: false, accounts: false, mpf: false, liabilities: false };
+  sectionCollapseState = { dist: false, accounts: false, mpf: false, liabilities: false, otherAccounts: false };
 
   try {
     localStorage.removeItem(scopedKey(STORAGE_KEY));
