@@ -568,9 +568,9 @@ function renderAccounts() {
   const netHkdEl = $('#net-hkd');
   const netCnyEl = $('#net-cny');
   const netTotalEl = $('#net-total-mop');
-  if (netMopEl) netMopEl.textContent = money('MOP', nets.MOP);
-  if (netHkdEl) netHkdEl.textContent = money('HKD', nets.HKD);
-  if (netCnyEl) netCnyEl.textContent = money('CNY', nets.CNY);
+  if (netMopEl) netMopEl.textContent = formatMoney(nets.MOP);
+  if (netHkdEl) netHkdEl.textContent = formatMoney(nets.HKD);
+  if (netCnyEl) netCnyEl.textContent = formatMoney(nets.CNY);
   if (netTotalEl) netTotalEl.textContent = money('MOP', toMOP(nets.MOP, 'MOP') + toMOP(nets.HKD, 'HKD') + toMOP(nets.CNY, 'CNY'));
 
   // 主戶口：排除電子錢包、現金、應收帳款；扁平列表（無類型分組）
@@ -601,11 +601,9 @@ function renderAccounts() {
         item.dataset.id = a.id;
         item.setAttribute('role', 'button');
         item.tabIndex = 0;
-        const typeIcon = ACCOUNT_TYPE_ICONS[a.type] || '';
         item.innerHTML = `
           <div class="account-row-main">
             <div class="account-name">${escapeHtml(a.name)}</div>
-            <div class="account-type-tag">${typeIcon} ${escapeHtml(a.type || '')}</div>
           </div>
           <div class="account-row-right">
             <div class="account-row-amount">${money('MOP', totalMop)}</div>
@@ -647,11 +645,9 @@ function renderAccounts() {
         item.dataset.id = a.id;
         item.setAttribute('role', 'button');
         item.tabIndex = 0;
-        const typeIcon = ACCOUNT_TYPE_ICONS[a.type] || '';
         item.innerHTML = `
           <div class="account-row-main">
             <div class="account-name">${escapeHtml(a.name)}</div>
-            <div class="account-type-tag">${typeIcon} ${escapeHtml(a.type || '')}</div>
           </div>
           <div class="account-row-right">
             <div class="account-row-amount">${isWallet ? '—' : money('MOP', totalMop)}</div>
@@ -685,8 +681,7 @@ function openAccountDetailModal(accountId) {
     summary = `<div class="account-meta">電子錢包不計入淨額</div>
       <div class="account-meta">扣帳銀行：${linked ? escapeHtml(linked.name) : '未設定'}</div>`;
   } else {
-    summary = `<div class="account-detail-total">${money('MOP', balancesToMOP(b))}</div>
-      ${currencyChipsHtml(b)}`;
+    summary = currencyChipsHtml(b);
     if (a.type === '銀行' && a.interestRate > 0) {
       summary += `<div class="account-meta" style="margin-top:8px">年利率 ${a.interestRate}% · ${a.interestPeriod === 'daily' ? '日息' : a.interestPeriod === 'monthly' ? '月息' : '年息'}</div>`;
     }
