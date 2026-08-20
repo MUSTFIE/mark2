@@ -1,16 +1,63 @@
 :root {
-  --bg: #f0f2f5;
-  --card: #ffffff;
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --income: #059669;
-  --expense: #dc2626;
-  --text: #111827;
-  --muted: #6b7280;
-  --border: #e5e7eb;
-  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.04);
-  --radius: 14px;
+  /* iOS System Colors */
+  --ios-blue: #007AFF;
+  --ios-green: #34C759;
+  --ios-red: #FF3B30;
+  --ios-orange: #FF9500;
+  --ios-gray: #8E8E93;
+  --ios-gray2: #AEAEB2;
+  --ios-gray3: #C7C7CC;
+  --ios-gray4: #D1D1D6;
+  --ios-gray5: #E5E5EA;
+  --ios-gray6: #F2F2F7;
+  --ios-fill: rgba(120, 120, 128, 0.16);
+  --ios-separator: rgba(60, 60, 67, 0.12);
+
+  --bg: #F2F2F7;
+  --card: #FFFFFF;
+  --primary: #007AFF;
+  --primary-hover: #0066D6;
+  --income: #34C759;
+  --expense: #FF3B30;
+  --text: #000000;
+  --muted: #8E8E93;
+  --border: rgba(60, 60, 67, 0.12);
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.06);
+  --radius: 20px;
+  --radius-sm: 14px;
+  --radius-xs: 12px;
   --nav-h: 64px;
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --header-h: 52px;
+  --sheet-radius: 16px;
+  --keypad-bg: #D1D5DB;
+  --keypad-key: rgba(255, 255, 255, 0.92);
+  --keypad-key-active: rgba(255, 255, 255, 0.55);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --card: #1C1C1E;
+    --primary: #0A84FF;
+    --primary-hover: #409CFF;
+    --income: #30D158;
+    --expense: #FF453A;
+    --text: #FFFFFF;
+    --muted: #8E8E93;
+    --border: rgba(84, 84, 88, 0.65);
+    --shadow: 0 1px 3px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+    --ios-separator: rgba(84, 84, 88, 0.65);
+    --ios-fill: rgba(120, 120, 128, 0.32);
+    --ios-gray5: #2C2C2E;
+    --ios-gray6: #1C1C1E;
+    --glass-bg: rgba(28, 28, 30, 0.78);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --keypad-bg: #1C1C1E;
+    --keypad-key: #3A3A3C;
+    --keypad-key-active: #4A4A4C;
+  }
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; }
@@ -42,6 +89,16 @@ body {
 header {
   display: flex; justify-content: space-between; align-items: center;
   gap: 10px; margin-bottom: 14px; min-height: 44px;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  margin-left: -16px;
+  margin-right: -16px;
+  padding: 8px 16px;
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 0.5px solid var(--glass-border);
 }
 header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
 .header-actions {
@@ -221,36 +278,69 @@ header h1 { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.02em; }
 .rates-hint { font-size: 0.8rem; color: var(--muted); margin-bottom: 14px; }
 
 .modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.45);
+  position: fixed; inset: 0; background: rgba(0,0,0,.4);
   display: flex; align-items: flex-end; justify-content: center;
   z-index: 100; padding: 0;
-}
-@media (min-width: 520px) {
-  .modal-overlay { align-items: center; padding: 16px; }
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
 }
 .modal-overlay.hidden { display: none; }
 .modal {
-  background: var(--card); border-radius: 16px 16px 0 0; width: 100%; max-width: 440px;
-  max-height: 92vh; overflow-y: auto;
-  box-shadow: 0 -8px 30px rgba(0,0,0,.12);
+  background: var(--card);
+  border-radius: var(--sheet-radius) var(--sheet-radius) 0 0;
+  width: 100%;
+  max-width: 520px;
+  max-height: min(92vh, 920px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-shadow: 0 -8px 40px rgba(0,0,0,.18);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  animation: sheet-up 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  position: relative;
 }
-@media (min-width: 520px) {
-  .modal { border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,.2); }
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+/* iOS grabber */
+.modal::before {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--ios-gray3);
+  margin: 8px auto 0;
+  flex-shrink: 0;
+}
+@media (prefers-color-scheme: dark) {
+  .modal::before { background: #636366; }
 }
 .modal-header {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 16px 18px; border-bottom: 1px solid var(--border); position: sticky; top: 0;
+  padding: 10px 18px 14px;
+  border-bottom: 0.5px solid var(--border);
+  position: sticky; top: 0;
   background: var(--card); z-index: 1;
 }
-.modal-header h3 { font-size: 1.05rem; }
+.modal-header h3 { font-size: 1.05rem; font-weight: 650; }
 form { padding: 14px 18px 20px; }
 .form-row { margin-bottom: 14px; }
 .form-row label {
   display: block; font-size: 0.8rem; font-weight: 550; margin-bottom: 6px; color: var(--muted);
 }
 .form-row input, .form-row select {
-  width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border);
-  border-radius: 10px; font-size: 0.9rem; background: #fff;
+  width: 100%; min-height: 44px; padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  font-size: 16px; /* 避免 iOS 自動縮放 */
+  background: var(--ios-gray6);
+  color: var(--text);
+}
+.form-row input:focus, .form-row select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
 }
 .amount-row { display: flex; gap: 8px; }
 .amount-row select { width: 96px; flex-shrink: 0; }
@@ -1917,5 +2007,157 @@ body {
   .modal-overlay .modal:not(.modal-sheet) {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+  }
+}
+
+
+/* ========== iOS 視覺強化 ========== */
+.card {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 0.5px solid var(--border);
+}
+.records-section, .chart-section, .type-group, .account-item, .mpf-card, .month-bar, .asset-group {
+  border-radius: var(--radius);
+}
+
+.btn {
+  border-radius: var(--radius-xs);
+  font-weight: 600;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+.btn:active { transform: scale(0.97); opacity: 0.88; }
+.btn.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.btn.primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+
+.bottom-nav {
+  background: var(--glass-bg) !important;
+  -webkit-backdrop-filter: saturate(180%) blur(20px) !important;
+  backdrop-filter: saturate(180%) blur(20px) !important;
+  border-top: 0.5px solid var(--glass-border) !important;
+}
+.nav-btn.active { color: var(--primary); }
+
+.assets-hero {
+  background: linear-gradient(145deg, rgba(0,122,255,0.12), rgba(0,122,255,0.04)) !important;
+  border: 0.5px solid rgba(0,122,255,0.2) !important;
+}
+@media (prefers-color-scheme: dark) {
+  .assets-hero {
+    background: linear-gradient(145deg, rgba(10,132,255,0.22), rgba(10,132,255,0.08)) !important;
+    border-color: rgba(10,132,255,0.3) !important;
+  }
+  .currency-chip { background: var(--ios-gray5); }
+  .type-btn { background: var(--ios-gray5); }
+  .dist-block { background: var(--ios-gray6); }
+  form { color: var(--text); }
+}
+
+/* 金額顯示列（搭配自訂鍵盤） */
+.amount-display-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+.amount-display-row select {
+  width: 96px;
+  flex-shrink: 0;
+}
+.amount-display {
+  flex: 1;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 10px 14px;
+  border-radius: var(--radius-xs);
+  background: var(--ios-gray6);
+  border: 1px solid var(--border);
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.amount-display.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+}
+.amount-display.placeholder {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* iOS 風格數字鍵盤 */
+.ios-keypad {
+  margin: 4px -6px 8px;
+  padding: 8px 6px 4px;
+  background: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.ios-keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.ios-key {
+  min-height: 52px;
+  border: none;
+  border-radius: 12px;
+  background: var(--keypad-key);
+  color: var(--text);
+  font-size: 1.35rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 1px 0 rgba(0,0,0,.08);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.08s ease, transform 0.08s ease;
+}
+.ios-key:active {
+  background: var(--keypad-key-active);
+  transform: scale(0.97);
+}
+.ios-key.ios-key-action {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+.ios-key.ios-key-del {
+  font-size: 1.2rem;
+}
+@media (prefers-color-scheme: dark) {
+  .ios-key {
+    box-shadow: 0 1px 0 rgba(0,0,0,.35);
+  }
+}
+
+/* 手機：header 與 nav 玻璃層一致 */
+@media (max-width: 640px) {
+  header {
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* 覆寫舊的置中 modal（桌面也改 bottom sheet） */
+@media (min-width: 520px) {
+  .modal-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  .modal {
+    border-radius: var(--sheet-radius) var(--sheet-radius) 0 0 !important;
+    max-width: 520px;
   }
 }
