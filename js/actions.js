@@ -1,6 +1,62 @@
 /**
  * actions.js — 新增/編輯紀錄、戶口、轉帳、日息、資產、強積金
  */
+
+/** 同步金額顯示與隱藏 input */
+function setAmountUI(val) {
+  const hidden = $('#amount');
+  const disp = $('#amount-display');
+  if (!hidden || !disp) return;
+  const s = val === null || val === undefined || val === '' ? '' : String(val);
+  hidden.value = s;
+  if (!s || s === '0' || s === '0.0' || s === '0.00') {
+    disp.textContent = '0.00';
+    disp.classList.add('placeholder');
+  } else {
+    disp.textContent = s;
+    disp.classList.remove('placeholder');
+  }
+}
+
+function getAmountUI() {
+  return ($('#amount')?.value || '').trim();
+}
+
+/** iOS 數字鍵盤輸入狀態（字串，支援小數點） */
+let amountKeypadBuffer = '';
+
+function resetAmountKeypad() {
+  amountKeypadBuffer = '';
+  setAmountUI('');
+}
+
+function applyAmountKey(key) {
+  if (key === 'del') {
+    amountKeypadBuffer = amountKeypadBuffer.slice(0, -1);
+  } else if (key === '.') {
+    if (amountKeypadBuffer.includes('.')) return;
+    if (!amountKeypadBuffer) amountKeypadBuffer = '0';
+    amountKeypadBuffer += '.';
+  } else if (/^[0-9]$/.test(key)) {
+    // 限制小數兩位
+    const dot = amountKeypadBuffer.indexOf('.');
+    if (dot >= 0 && amountKeypadBuffer.length - dot > 2) return;
+    // 避免一串前導零
+    if (amountKeypadBuffer === '0' && key !== '.') amountKeypadBuffer = key;
+    else amountKeypadBuffer += key;
+  } else {
+    return;
+  }
+  setAmountUI(amountKeypadBuffer);
+  // 代墊：同步應收 = 總額 − 自費
+  if ($('#is-advance')?.checked) {
+    const amt = Number(amountKeypadBuffer) || 0;
+    const selfV = Number($('#advance-self-amt')?.value) || 0;
+    const recvEl = $('#advance-recv-amt');
+    if (recvEl) recvEl.value = Math.max(0, +(amt - selfV).toFixed(2));
+  }
+}
+
 function openAddModal() {
   if (!accounts.length) {
     toast('請先到資產頁新增戶口', 'err');
@@ -25,8 +81,15 @@ function openAddModal() {
   populateAccountSelect(getPref('lastAccountId', ''));
   const lastCur = getPref('lastCurrency', 'MOP');
   if ($('#currency')) $('#currency').value = lastCur;
+  resetAmountKeypad();
   $('#modal-overlay').classList.remove('hidden');
-  setTimeout(() => { const a = $('#amount'); if (a) a.focus(); }, 100);
+  setTimeout(() => {
+    const d = $('#amount-display');
+    if (d) {
+      d.classList.add('active');
+      d.focus();
+    }
+  }, 100);
 }
 
 function openEditModal(id) {
@@ -34,7 +97,8 @@ function openEditModal(id) {
   if (!r) return;
   $('#modal-title').textContent = '編輯紀錄';
   $('#edit-id').value = r.id;
-  $('#amount').value = r.amount;
+  amountKeypadBuffer = String(r.amount ?? '');
+  setAmountUI(amountKeypadBuffer);
   $('#currency').value = r.currency;
   $('#date').value = r.date;
   $('#note').value = r.note || '';
@@ -71,6 +135,8 @@ function handleRecordSubmit(e) {
   e.preventDefault();
   const selectedId = $('#record-account').value;
   if (!selectedId) { alert('請選擇戶口'); return; }
+  const amountVal = Number($('#amount')?.value) || 0;
+  if (amountVal <= 0) { alert('請輸入金額'); return; }
 
   // 代墊模式（僅新增）
   const asAdvance = !!( $('#is-advance')?.checked && !$('#edit-id').value );
