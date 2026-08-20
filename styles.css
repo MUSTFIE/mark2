@@ -821,9 +821,10 @@ body {
   gap: 6px;
   margin-bottom: 0;
   align-items: stretch;
+  width: 100%;
 }
 .summary-cards.currency-three-compact .card {
-  flex: 0 1 auto;
+  flex: 1 1 0;
   min-width: 0;
   padding: 8px 10px;
   border-radius: 12px;
