@@ -738,7 +738,7 @@ body {
   opacity: 0.9;
 }
 .summary-cards.summary-assets-secondary {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   margin-bottom: 0;
 }
@@ -812,6 +812,62 @@ body {
   .summary-cards.currency-four-compact {
     grid-template-columns: repeat(4, 1fr);
   }
+}
+
+/* 戶口幣別三卡（無總結餘） */
+.summary-cards.currency-three-compact {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 0;
+}
+.summary-cards.currency-three-compact .card {
+  padding: 8px 6px;
+  border-radius: 12px;
+}
+.summary-cards.currency-three-compact .card .label {
+  font-size: 0.62rem;
+  margin-bottom: 2px;
+}
+.summary-cards.currency-three-compact .card .value {
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+@media (max-width: 400px) {
+  .summary-cards.currency-three-compact .card .value {
+    font-size: 0.72rem;
+  }
+}
+
+/* 其他戶口列表（錢包／現金／應收） */
+#accounts-other-list .account-item {
+  margin-bottom: 8px;
+}
+#accounts-other-list .account-row {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+#accounts-other-list .account-type-tag {
+  font-size: 0.65rem;
+  color: var(--muted);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* 戶口扁平列表（無類型分組） */
+#accounts-by-type.accounts-flat .account-row {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+#accounts-by-type.accounts-flat .account-type-tag {
+  font-size: 0.65rem;
+  color: var(--muted);
+  font-weight: 600;
+  margin-top: 2px;
 }
 
 /* 各月明細優化 */
