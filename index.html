@@ -344,13 +344,30 @@
  </div>
  <div class="form-row">
  <label for="amount">金額</label>
- <div class="amount-row">
+ <div class="amount-display-row">
  <select id="currency" required>
  <option value="MOP">MOP</option>
  <option value="HKD">HKD</option>
  <option value="CNY">CNY</option>
  </select>
- <input type="number" id="amount" step="0.01" min="0.01" placeholder="0.00" required>
+ <div id="amount-display" class="amount-display placeholder" role="button" tabindex="0" aria-label="金額">0.00</div>
+ <input type="hidden" id="amount" value="">
+ </div>
+ <div id="ios-keypad" class="ios-keypad" aria-hidden="false">
+  <div class="ios-keypad-grid">
+   <button type="button" class="ios-key" data-key="1">1</button>
+   <button type="button" class="ios-key" data-key="2">2</button>
+   <button type="button" class="ios-key" data-key="3">3</button>
+   <button type="button" class="ios-key" data-key="4">4</button>
+   <button type="button" class="ios-key" data-key="5">5</button>
+   <button type="button" class="ios-key" data-key="6">6</button>
+   <button type="button" class="ios-key" data-key="7">7</button>
+   <button type="button" class="ios-key" data-key="8">8</button>
+   <button type="button" class="ios-key" data-key="9">9</button>
+   <button type="button" class="ios-key ios-key-action" data-key=".">.</button>
+   <button type="button" class="ios-key" data-key="0">0</button>
+   <button type="button" class="ios-key ios-key-del ios-key-action" data-key="del" aria-label="刪除">⌫</button>
+  </div>
  </div>
  </div>
  <div class="form-row">
