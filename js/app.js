@@ -231,15 +231,29 @@ function init() {
   const colOverlay = $('#collect-modal-overlay');
   if (colOverlay) colOverlay.addEventListener('click', e => { if (e.target.id === 'collect-modal-overlay') closeCollectModal(); });
 
-  // 金額欄 Enter → 提交
-  const amountInput = $('#amount');
-  if (amountInput) {
-    amountInput.addEventListener('keydown', e => {
+  // iOS 數字鍵盤
+  const keypad = $('#ios-keypad');
+  if (keypad) {
+    keypad.addEventListener('click', e => {
+      const btn = e.target.closest('.ios-key');
+      if (!btn) return;
+      const key = btn.dataset.key;
+      if (key) applyAmountKey(key);
+    });
+  }
+  const amountDisp = $('#amount-display');
+  if (amountDisp) {
+    amountDisp.addEventListener('click', () => amountDisp.classList.add('active'));
+    amountDisp.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
         e.preventDefault();
         const form = $('#record-form');
         if (form) form.requestSubmit();
+        return;
       }
+      if (e.key === 'Backspace') { e.preventDefault(); applyAmountKey('del'); return; }
+      if (e.key === '.' || e.key === ',') { e.preventDefault(); applyAmountKey('.'); return; }
+      if (/^[0-9]$/.test(e.key)) { e.preventDefault(); applyAmountKey(e.key); }
     });
   }
 
