@@ -194,11 +194,17 @@
  </div>
 
  <div id="page-assets" class="page">
- <div class="summary-cards summary-assets">
- <div class="card income"><div class="label">總資產 (MOP)</div><div class="value" id="assets-gross">MOP 0</div></div>
- <div class="card expense"><div class="label">扣減合計 (MOP)</div><div class="value" id="assets-liability">MOP 0</div></div>
- <div class="card balance"><div class="label">總存款 (MOP)</div><div class="value" id="assets-deposit">MOP 0</div></div>
- <div class="card balance"><div class="label">淨資產 (MOP)</div><div class="value" id="assets-net">MOP 0</div></div>
+ <div class="assets-overview">
+  <div class="assets-hero card balance">
+   <div class="label">總存款 (MOP)</div>
+   <div class="value" id="assets-deposit">MOP 0</div>
+   <div class="assets-hero-hint">總資產 − 扣減 − 強積金</div>
+  </div>
+  <div class="summary-cards summary-assets-secondary">
+   <div class="card income"><div class="label">總資產</div><div class="value" id="assets-gross">MOP 0</div></div>
+   <div class="card expense"><div class="label">扣減合計</div><div class="value" id="assets-liability">MOP 0</div></div>
+   <div class="card balance"><div class="label">淨資產</div><div class="value" id="assets-net">MOP 0</div></div>
+  </div>
  </div>
  <section class="records-section collapsible-section" id="section-dist">
  <div class="section-collapse-header" data-section="dist" role="button" tabindex="0">
@@ -223,11 +229,11 @@
  <span class="section-collapse-title"><span class="sec-chevron">▼</span> 戶口</span>
  </div>
  <div class="section-summary">
- <div class="summary-cards currency-four">
+ <div class="summary-cards currency-four currency-four-compact">
  <div class="card balance"><div class="label">MOP</div><div class="value" id="net-mop">MOP 0</div></div>
  <div class="card balance"><div class="label">HKD</div><div class="value" id="net-hkd">HKD 0</div></div>
  <div class="card balance"><div class="label">CNY</div><div class="value" id="net-cny">CNY 0</div></div>
- <div class="card balance highlight"><div class="label">總結餘 (MOP)</div><div class="value" id="net-total-mop">MOP 0</div></div>
+ <div class="card balance highlight"><div class="label">總結餘</div><div class="value" id="net-total-mop">MOP 0</div></div>
  </div>
  </div>
  <div class="section-collapse-body">
