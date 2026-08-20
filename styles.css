@@ -700,12 +700,116 @@ body {
   margin-bottom: 0;
 }
 
-/* 資產四格摘要 */
+/* 資產總覽：總存款突出 + 次要三格 */
+.assets-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.assets-hero {
+  text-align: center;
+  padding: 18px 16px 14px;
+  background: linear-gradient(145deg, #eef2ff 0%, #e0e7ff 55%, #dbeafe 100%);
+  border: 1px solid #c7d2fe;
+  box-shadow: var(--shadow);
+}
+.assets-hero .label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+}
+.assets-hero .value {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  word-break: break-all;
+  line-height: 1.25;
+}
+.assets-hero-hint {
+  margin-top: 8px;
+  font-size: 0.68rem;
+  color: var(--muted);
+  font-weight: 500;
+  opacity: 0.9;
+}
+.summary-cards.summary-assets-secondary {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 0;
+}
+.summary-cards.summary-assets-secondary .card {
+  padding: 10px 8px;
+}
+.summary-cards.summary-assets-secondary .card .label {
+  font-size: 0.65rem;
+  margin-bottom: 3px;
+}
+.summary-cards.summary-assets-secondary .card .value {
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+/* 相容舊 class（若仍有引用） */
 .summary-cards.summary-assets {
   grid-template-columns: repeat(2, 1fr);
 }
 @media (min-width: 768px) {
   .summary-cards.summary-assets {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .assets-hero .value {
+    font-size: 1.75rem;
+  }
+  .summary-cards.summary-assets-secondary .card .value {
+    font-size: 0.9rem;
+  }
+}
+
+/* 戶口區塊幣別卡：縮小版 */
+.summary-cards.currency-four-compact {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 0;
+}
+.summary-cards.currency-four-compact .card {
+  padding: 8px 4px;
+  border-radius: 12px;
+}
+.summary-cards.currency-four-compact .card .label {
+  font-size: 0.62rem;
+  margin-bottom: 2px;
+}
+.summary-cards.currency-four-compact .card .value {
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+.summary-cards.currency-four-compact .card.highlight {
+  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+  border: 1px solid #c7d2fe;
+}
+@media (max-width: 400px) {
+  .assets-hero .value {
+    font-size: 1.35rem;
+  }
+  .summary-cards.summary-assets-secondary .card .value {
+    font-size: 0.75rem;
+  }
+  .summary-cards.currency-four-compact .card .value {
+    font-size: 0.68rem;
+  }
+  .summary-cards.currency-four-compact {
+    gap: 4px;
+  }
+}
+@media (max-width: 480px) {
+  .summary-cards.currency-four-compact {
     grid-template-columns: repeat(4, 1fr);
   }
 }
