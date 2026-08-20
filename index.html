@@ -202,9 +202,10 @@
   </div>
   <div class="summary-cards summary-assets-secondary">
    <div class="card income"><div class="label">總資產</div><div class="value" id="assets-gross">MOP 0</div></div>
-   <div class="card expense"><div class="label">扣減合計</div><div class="value" id="assets-liability">MOP 0</div></div>
    <div class="card balance"><div class="label">淨資產</div><div class="value" id="assets-net">MOP 0</div></div>
   </div>
+  <!-- assets-liability kept for JS updates (hidden) -->
+  <div id="assets-liability" class="hidden" aria-hidden="true">MOP 0</div>
  </div>
  <section class="records-section collapsible-section" id="section-dist">
  <div class="section-collapse-header" data-section="dist" role="button" tabindex="0">
@@ -229,12 +230,13 @@
  <span class="section-collapse-title"><span class="sec-chevron">▼</span> 戶口</span>
  </div>
  <div class="section-summary">
- <div class="summary-cards currency-four currency-four-compact">
+ <div class="summary-cards currency-three currency-three-compact">
  <div class="card balance"><div class="label">MOP</div><div class="value" id="net-mop">MOP 0</div></div>
  <div class="card balance"><div class="label">HKD</div><div class="value" id="net-hkd">HKD 0</div></div>
  <div class="card balance"><div class="label">CNY</div><div class="value" id="net-cny">CNY 0</div></div>
- <div class="card balance highlight"><div class="label">總結餘</div><div class="value" id="net-total-mop">MOP 0</div></div>
  </div>
+ <!-- net-total-mop kept for JS updates (hidden) -->
+ <div id="net-total-mop" class="hidden" aria-hidden="true">MOP 0</div>
  </div>
  <div class="section-collapse-body">
  <div id="accounts-by-type"></div>
@@ -282,6 +284,15 @@
  <div class="section-collapse-body">
  <div id="liabilities-list"></div>
  <div id="no-liabilities" class="empty-hint">尚無扣減項</div>
+ </div>
+ </section>
+ <section class="records-section collapsible-section" id="section-otherAccounts">
+ <div class="section-collapse-header" data-section="otherAccounts" role="button" tabindex="0">
+ <span class="section-collapse-title"><span class="sec-chevron">▼</span> 其他（錢包／現金／應收）</span>
+ </div>
+ <div class="section-collapse-body">
+ <div id="accounts-other-list"></div>
+ <div id="no-other-accounts" class="empty-hint">尚無電子錢包、現金或應收帳款</div>
  </div>
  </section>
  </div>
